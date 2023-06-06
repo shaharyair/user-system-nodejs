@@ -1,5 +1,9 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const {
+  hashPasswordMiddleware,
+  comparePasswordMiddleware,
+} = require("../middleware/userMiddleware");
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -47,21 +51,8 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// Hash the password before saving the user
-userSchema.pre("save", async function (next) {
-  if (this.isModified("password") || this.isNew) {
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(this.password, salt);
-    this.password = hashedPassword;
-  }
-
-  next();
-});
-
-// Method to compare entered password with the stored hashed password
-userSchema.methods.comparePassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
-};
+userSchema.pre("save", hashPasswordMiddleware);
+userSchema.methods.comparePassword = comparePasswordMiddleware;
 
 const User = mongoose.model("User", userSchema);
 
