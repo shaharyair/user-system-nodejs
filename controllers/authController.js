@@ -71,6 +71,11 @@ exports.protect = async (req, res, next) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
+    // Check if the user ID from the token matches the user ID from the database
+    if (user._id.toString() !== decoded.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     // Store the user object in the request for further processing
     req.user = user;
 
