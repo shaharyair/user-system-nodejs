@@ -7,6 +7,11 @@ app.use(express.json());
 
 app.use(morgan("tiny"));
 
+app.use((req, res, next) => {
+  console.log(req.headers);
+  next();
+});
+
 app.use("/users", userRouter);
 
 module.exports = app;

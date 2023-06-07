@@ -11,9 +11,9 @@ router.post("/register", authController.registerUser);
 router.post("/login", authController.loginUser);
 
 // Update user information
-router.put("/:id", userController.updateUser);
+router.put("/:id", authController.protect, userController.updateUser);
 
 // Delete user
-router.delete("/:id", userController.deleteUser);
+router.delete("/:id", authController.protect, userController.deleteUser);
 
 module.exports = router;

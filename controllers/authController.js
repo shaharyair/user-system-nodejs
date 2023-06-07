@@ -44,3 +44,39 @@ exports.loginUser = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.protect = async (req, res, next) => {
+  try {
+    let token;
+
+    // Check if the token exists in the request headers
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Verify the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Retrieve the user based on the decoded user ID
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Store the user object in the request for further processing
+    req.user = user;
+
+    next();
+  } catch (error) {
+    // Handle token verification errors
+    return res.status(401).json({ message: "Unauthorized", error });
+  }
+};
