@@ -14,6 +14,11 @@ router.post("/login", authController.loginUser);
 router.put("/:id", authController.protect, userController.updateUser);
 
 // Delete user
-router.delete("/:id", authController.protect, userController.deleteUser);
+router.delete(
+  "/:id",
+  authController.protect,
+  authController.restrictTo("admin"),
+  userController.deleteUser
+);
 
 module.exports = router;

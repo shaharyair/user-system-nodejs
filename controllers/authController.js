@@ -10,8 +10,8 @@ const signToken = (id) => {
 // Register a new user
 exports.registerUser = async (req, res, next) => {
   try {
-    const { username, email, password } = req.body;
-    const newUser = new User({ username, email, password });
+    const { username, email, password, role } = req.body;
+    const newUser = new User({ username, email, password, role });
     await newUser.save();
 
     // Generate JWT token
@@ -72,7 +72,7 @@ exports.protect = async (req, res, next) => {
     }
 
     // Check if the user ID from the token matches the user ID from the database
-    if (user._id.toString() !== decoded.userId) {
+    if (decoded.userId != req.params.id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -84,4 +84,14 @@ exports.protect = async (req, res, next) => {
     // Handle token verification errors
     return res.status(401).json({ message: "Unauthorized", error });
   }
+};
+
+// restricts functions for specific roles in the app
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    next();
+  };
 };
