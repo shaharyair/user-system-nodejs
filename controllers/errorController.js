@@ -14,11 +14,11 @@ const sendErrorProd = (err, res) => {
       message: err.message,
     });
   } else {
-    console.log(`Error: ${err}`);
+    console.error("Error:", err);
 
     res.status(500).json({
       status: "error",
-      message: "An error occured",
+      message: "Non operational error.",
     });
   }
 };
@@ -30,7 +30,6 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === "dev") {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === "prod") {
-    let error = { ...err };
-    sendErrorProd(error, res);
+    sendErrorProd(err, res);
   }
 };
