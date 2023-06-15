@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+const AppError = require("../utils/appError");
 
 const signToken = (id) => {
   return jwt.sign({ userId: id }, process.env.JWT_SECRET, {
@@ -28,12 +29,14 @@ exports.loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
+
     if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return next(new AppError("invaild email or password", 401));
     }
     const isPasswordValid = await user.comparePassword(password);
+
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return next(new AppError("invaild email or password", 401));
     }
 
     // Generate JWT token
@@ -58,7 +61,7 @@ exports.protect = async (req, res, next) => {
     }
 
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return next(new AppError("Token is invaild", 401));
     }
 
     // Verify the token
@@ -68,12 +71,7 @@ exports.protect = async (req, res, next) => {
     const user = await User.findById(decoded.userId);
 
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    // Check if the user ID from the token matches the user ID from the database
-    if (decoded.userId != req.params.id) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return next(new AppError("User was not found!", 401));
     }
 
     // Store the user object in the request for further processing
@@ -82,7 +80,7 @@ exports.protect = async (req, res, next) => {
     next();
   } catch (error) {
     // Handle token verification errors
-    return res.status(401).json({ message: "Unauthorized", error });
+    return next(new AppError("Token was not verified", 401));
   }
 };
 
@@ -90,7 +88,7 @@ exports.protect = async (req, res, next) => {
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return next(new AppError("Unauthorized action", 401));
     }
     next();
   };
