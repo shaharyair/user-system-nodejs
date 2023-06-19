@@ -37,12 +37,14 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === "dev") {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === "prod") {
-    let error = err;
+    // make a deep copy of err
+    let error = JSON.parse(JSON.stringify(err));
 
     // Handling specific types of errors
     if (error.name === "CastError") {
       error = handleCastErrorDB(error);
     }
+
     sendErrorProd(error, res);
   }
 };
