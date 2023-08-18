@@ -93,3 +93,15 @@ exports.restrictTo = (...roles) => {
     next();
   };
 };
+
+// generates a reset password token
+exports.forgotPassword = async (req, res, next) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  if (!user) {
+    return next(new AppError("There is no user with email address.", 404));
+  }
+
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+};

@@ -18,6 +18,9 @@ router.post("/register", authController.registerUser);
 // User login
 router.post("/login", authController.loginUser);
 
+// forgot Password
+router.post("/forgotPassword", authController.forgotPassword);
+
 // Update user information
 router.put("/:id", authController.protect, userController.updateUser);
 
