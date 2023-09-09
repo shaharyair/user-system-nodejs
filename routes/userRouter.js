@@ -18,8 +18,9 @@ router.post("/register", authController.registerUser);
 // User login
 router.post("/login", authController.loginUser);
 
-// forgot Password
+// forgot and reset Password
 router.post("/forgotPassword", authController.forgotPassword);
+router.patch("/resetPassword/:token", authController.resetPassword);
 
 // Update user information
 router.put("/:id", authController.protect, userController.updateUser);

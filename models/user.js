@@ -46,6 +46,17 @@ const userSchema = new mongoose.Schema({
         "Password must contain at least 8 characters, including one lowercase letter, one uppercase letter, one number, and one special character.",
     },
   },
+  passwordConfirm: {
+    type: String,
+    required: true,
+    minlength: 8,
+    validate: {
+      validator: function (value) {
+        return value === this.password;
+      },
+      message: "Password do not match.",
+    },
+  },
   role: {
     type: String,
     enum: ["user", "admin"],
@@ -53,6 +64,7 @@ const userSchema = new mongoose.Schema({
   },
   passwordResetToken: String,
   passwordResetTokenExpires: Date,
+  passwordChangedAt: Date,
 });
 
 // Hash the password before saving the user
@@ -61,6 +73,8 @@ userSchema.pre("save", async function (next) {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(this.password, salt);
     this.password = hashedPassword;
+    this.passwordConfirm = undefined;
+    this.passwordChangedAt = Date.now() - 1000;
   }
   next();
 });
@@ -79,9 +93,7 @@ userSchema.methods.createPasswordResetToken = function () {
     .update(resetToken)
     .digest("hex");
 
-  console.log({ resetToken }, this.passwordResetToken);
-
-  this.passwordResetTokenExpires = Date.now() + 10 * 60 * 1000;
+  this.passwordResetTokenExpires = Date.now() + 5 * 60 * 1000;
 
   return resetToken;
 };
