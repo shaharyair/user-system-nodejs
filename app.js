@@ -8,7 +8,7 @@ app.use(express.json());
 
 app.use(morgan("tiny"));
 
-app.use("/users", userRouter);
+app.use("/api/users", userRouter);
 
 app.use(globalErrorsController);
 
