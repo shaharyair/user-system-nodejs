@@ -33,11 +33,6 @@ router.patch(
 router.patch("/updateUser", authController.protect, userController.updateUser);
 
 // Delete user
-router.delete(
-  "/:id",
-  authController.protect,
-  authController.restrictTo("admin"),
-  userController.deleteUser
-);
+router.delete("/deleteUser", authController.protect, userController.deleteUser);
 
 module.exports = router;

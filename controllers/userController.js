@@ -1,16 +1,5 @@
 const User = require("../models/user");
 
-// Delete user
-exports.deleteUser = async (req, res, next) => {
-  try {
-    const userId = req.params.id;
-    await User.findByIdAndRemove(userId);
-    res.status(200).json({ message: "User deleted successfully" });
-  } catch (err) {
-    next(err);
-  }
-};
-
 exports.getAllUsers = async (req, res, next) => {
   try {
     const users = await User.find();
@@ -42,6 +31,16 @@ exports.updateUser = async (req, res, next) => {
         user: updatedUser,
       },
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Delete user
+exports.deleteUser = async (req, res, next) => {
+  try {
+    await User.findByIdAndUpdate(req.user.id, { active: false });
+    res.status(204).json({ message: "User deleted successfully" });
   } catch (err) {
     next(err);
   }

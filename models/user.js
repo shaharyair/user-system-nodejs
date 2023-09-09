@@ -65,6 +65,11 @@ const userSchema = new mongoose.Schema({
   passwordResetToken: String,
   passwordResetTokenExpires: Date,
   passwordChangedAt: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
 });
 
 // Hash the password before saving the user
@@ -76,6 +81,13 @@ userSchema.pre("save", async function (next) {
     this.passwordConfirm = undefined;
     this.passwordChangedAt = Date.now() - 1000;
   }
+  next();
+});
+
+userSchema.pre(/^find/, async function (next) {
+  this.find({
+    active: { $ne: false },
+  });
   next();
 });
 
