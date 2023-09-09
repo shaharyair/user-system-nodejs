@@ -22,7 +22,7 @@ router.post("/login", authController.loginUser);
 router.post("/forgotPassword", authController.forgotPassword);
 router.patch("/resetPassword/:token", authController.resetPassword);
 
-// updatw Password
+// update Password
 router.patch(
   "/updateUserPassword",
   authController.protect,
@@ -30,7 +30,7 @@ router.patch(
 );
 
 // Update user information
-router.put("/:id", authController.protect, userController.updateUser);
+router.patch("/updateUser", authController.protect, userController.updateUser);
 
 // Delete user
 router.delete(
