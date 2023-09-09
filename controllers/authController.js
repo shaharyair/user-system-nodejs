@@ -10,6 +10,18 @@ const signToken = (id) => {
   });
 };
 
+const createSendToken = (user, statusCode, res) => {
+  // Generate JWT token
+  const token = signToken(user._id);
+  res.status(statusCode).json({
+    status: "success",
+    token,
+    data: {
+      user,
+    },
+  });
+};
+
 // Register a new user
 exports.registerUser = async (req, res, next) => {
   try {
@@ -24,12 +36,9 @@ exports.registerUser = async (req, res, next) => {
     });
     await newUser.save();
 
-    // Generate JWT token
-    const token = signToken(newUser._id);
-
-    res.status(201).json({ message: "User registered successfully", token });
-  } catch (error) {
-    next(error);
+    createSendToken(newUser, 201, res);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -48,12 +57,9 @@ exports.loginUser = async (req, res, next) => {
       return next(new AppError("invaild email or password", 401));
     }
 
-    // Generate JWT token
-    const token = signToken(user._id);
-
-    res.status(200).json({ message: "Login successful", token });
-  } catch (error) {
-    next(error);
+    createSendToken(user, 200, res);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -105,69 +111,91 @@ exports.restrictTo = (...roles) => {
 
 // generates a reset password token
 exports.forgotPassword = async (req, res, next) => {
-  const user = await User.findOne({ email: req.body.email });
-
-  if (!user) {
-    return next(new AppError("There is no user with email address.", 404));
-  }
-
-  const resetToken = user.createPasswordResetToken();
-  await user.save({ validateBeforeSave: false });
-
-  const resetUrl = `${req.protocol}://${req.get(
-    "host"
-  )}/api/users/resetPassword/${resetToken}`;
-
-  const message = `Forgot your password? Click the link below.\n${resetUrl}`;
-
   try {
-    await sendEmail({
-      email: user.email,
-      subject: "Your password reset link",
-      message,
-    });
+    const user = await User.findOne({ email: req.body.email });
 
-    res.status(200).json({
-      message: "Link sent to email!",
-    });
-  } catch (err) {
-    user.passwordResetToken = undefined;
-    user.passwordResetTokenExpires = undefined;
+    if (!user) {
+      return next(new AppError("There is no user with email address.", 404));
+    }
+
+    const resetToken = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
 
-    return next(
-      new AppError(
-        "There was an error sending the email, Please try again later.",
-        500
-      )
-    );
+    const resetUrl = `${req.protocol}://${req.get(
+      "host"
+    )}/api/users/resetPassword/${resetToken}`;
+
+    const message = `Forgot your password? Click the link below.\n${resetUrl}`;
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: "Your password reset link",
+        message,
+      });
+
+      res.status(200).json({
+        message: "Link sent to email!",
+      });
+    } catch (err) {
+      user.passwordResetToken = undefined;
+      user.passwordResetTokenExpires = undefined;
+      await user.save({ validateBeforeSave: false });
+
+      return next(
+        new AppError(
+          "There was an error sending the email, Please try again later.",
+          500
+        )
+      );
+    }
+  } catch (err) {
+    next(err);
   }
 };
 
 exports.resetPassword = async (req, res, next) => {
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(req.params.token)
-    .digest("hex");
+  try {
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
 
-  const user = await User.findOne({
-    passwordResetToken: hashedToken,
-    passwordResetTokenExpires: { $gt: Date.now() },
-  });
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetTokenExpires: { $gt: Date.now() },
+    });
 
-  if (!user) {
-    return next(new AppError("Token is invalid or has expired", 400));
+    if (!user) {
+      return next(new AppError("Token is invalid or has expired", 400));
+    }
+
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+    user.passwordResetToken = undefined;
+    user.passwordResetTokenExpires = undefined;
+    await user.save();
+
+    createSendToken(user, 200, res);
+  } catch (err) {
+    next(err);
   }
+};
 
-  user.password = req.body.password;
-  user.passwordConfirm = req.body.passwordConfirm;
-  user.passwordResetToken = undefined;
-  user.passwordResetTokenExpires = undefined;
-  await user.save();
+exports.updatePassword = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select("+password");
 
-  // Generate JWT token
-  const token = signToken(user._id);
-  res
-    .status(200)
-    .json({ message: "Password Restored, Login successful", token });
+    if (!user.comparePassword(req.body.passwordCurrent)) {
+      return next(new AppError("Your current password is incorrect", 401));
+    }
+
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+    await user.save();
+
+    createSendToken(user, 200, res);
+  } catch (err) {
+    next(err);
+  }
 };
