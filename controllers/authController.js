@@ -11,7 +11,13 @@ const signToken = (id) => {
 // Register a new user
 exports.registerUser = async (req, res, next) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password, passwordConfirm, role } = req.body;
+
+    // Check if password and confirmPassword match
+    if (password !== passwordConfirm) {
+      return res.status(400).json({ error: "Passwords do not match" });
+    }
+
     const newUser = new User({ username, email, password, role });
     await newUser.save();
 
