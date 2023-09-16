@@ -3,6 +3,9 @@ const morgan = require("morgan");
 const moment = require("moment");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
+const xss = require("xss-clean");
+
 const userRouter = require("./routes/userRouter");
 const globalErrorsController = require("./controllers/errorController");
 
@@ -10,6 +13,10 @@ const app = express();
 app.use(express.json());
 
 app.use(helmet());
+
+app.use(mongoSanitize());
+
+app.use(xss());
 
 app.use(morgan("tiny"));
 
