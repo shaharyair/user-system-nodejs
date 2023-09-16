@@ -19,14 +19,14 @@ const app = express();
 // Parse incoming JSON requests
 app.use(express.json());
 
+// Request logging using 'morgan' middleware with the 'tiny' format
+if (process.env.NODE_ENV === "dev") app.use(morgan("tiny"));
+
 // Apply security-related middlewares
 app.use(helmet()); // Set security headers
 app.use(mongoSanitize()); // Prevent NoSQL injection
 app.use(xss()); // Prevent XSS attacks
 app.use(hpp()); // Prevent HTTP Parameter Pollution
-
-// Request logging using 'morgan' middleware with the 'tiny' format
-app.use(morgan("tiny"));
 
 // Configure rate limiting for API requests
 const limiter = rateLimit({
