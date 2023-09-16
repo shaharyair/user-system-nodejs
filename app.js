@@ -2,11 +2,14 @@ const express = require("express");
 const morgan = require("morgan");
 const moment = require("moment");
 const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
 const userRouter = require("./routes/userRouter");
 const globalErrorsController = require("./controllers/errorController");
 
 const app = express();
 app.use(express.json());
+
+app.use(helmet());
 
 app.use(morgan("tiny"));
 
